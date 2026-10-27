@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇題系統</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #E3F2FD; font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 500px; background-color: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); text-align: center; box-sizing: border-box; }
+        .hidden { display: none !important; }
+        h1 { color: #1565C0; font-size: 2.5rem; margin-top: 0; margin-bottom: 30px; }
+        .subtitle { color: #555; font-size: 1.1rem; margin-bottom: 20px; font-weight: bold; }
+        .form-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-weight: bold; color: #333; margin-bottom: 8px; }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 12px; border: 2px solid #BBDEFB; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; background-color: #fff; }
+        input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color: #1E88E5; }
+        .option-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        input[type="radio"] { width: 20px; height: 20px; cursor: pointer; }
+        .btn-group-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { width: 100%; padding: 14px 0; font-size: 1.1rem; font-weight: bold; color: white; border: none; border-radius: 50px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-top: 10px; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-start { background-color: #1E88E5; }
+        .btn-create { background-color: #43A047; }
+        .btn-back { background-color: #FFA726; }
+        .btn-delete { background-color: #E53935; }
+        .btn-delete:hover { background-color: #C62828; }
+        .btn-setting { background-color: #78909C; }
+        .options-list { display: flex; flex-direction: column; }
+        .fr24-row { display: flex; justify-content: space-between; align-items: center; background-color: #F5F5F5; padding: 15px 20px; border-radius: 10px; border-left: 6px solid #1E88E5; margin-bottom: 30px; text-align: left; }
+        .fr24-info { font-size: 1.1rem; color: #333; font-weight: bold; }
+        .fr24-btn { width: auto; padding: 8px 18px; font-size: 0.95rem; margin-top: 0; border-radius: 6px; }
+        .fr24-btn-disabled { background-color: #B0BEC5; color: #FFF; cursor: not-allowed; box-shadow: none; }
+        .fr24-btn-disabled:hover { transform: none; }
+        .result-item { text-align: left; background: #F5F5F5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #43A047; }
+        .correct-ans { color: #2E7D32; font-weight: bold; }
+        .quiz-option-btn { background-color: #FFF; color: #333; border: 2px solid #BBDEFB; border-radius: 10px; text-align: left; padding: 12px 20px; margin-bottom: 10px; font-size: 1rem; cursor: pointer; transition: all 0.2s; width: 100%; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+        .quiz-option-btn:hover { background-color: #E3F2FD; border-color: #1E88E5; }
+        .quiz-option-btn.correct { background-color: #A5D6A7 !important; border-color: #2E7D32 !important; color: #1B5E20 !important; }
+        .quiz-option-btn.wrong { background-color: #EF9A9A !important; border-color: #C62828 !important; color: #B71C1C !important; }
+        .btn-next-step-play { display: block; width: 100%; margin-top: 15px; background-color: #FF9800; }
+        .btn-next-step-play:hover { background-color: #F57C00; }
+        #pwd-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #E3F2FD; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div id="pwd-gate">
+        <div class="container" style="box-shadow: 0 15px 35px rgba(30,136,229,0.2);">
+            <h2 style="color: #1565C0; margin-bottom: 10px;">系統安全驗證</h2>
+            <p style="color: #666; font-size: 0.95rem; margin-bottom: 25px;">請輸入開發人員密碼以解除鎖定</p>
+            <div class="form-group">
+                <input type="password" id="gate-pwd-input" placeholder="請輸入開發人員密碼..." style="text-align: center; font-size: 1.1rem;">
+            </div>
+            <button class="btn btn-start" onclick="verifyGatePassword()">確認解鎖</button>
+        </div>
+    </div>
+
+    <div id="main-body" class="hidden" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+        <div id="cover-screen" class="container">
+            <h1 data-i18n="main_title">選擇題</h1>
+            <div class="options-list">
+                <button class="btn btn-start" data-i18n="btn_start_test" onclick="openStartTest()">開始測試</button>
+                <button class="btn btn-create" data-i18n="btn_create_quiz" onclick="switchScreen('name-screen')">出 題</button>
+                <button class="btn btn-setting" data-i18n="btn_setting" onclick="switchScreen('setting-screen')">設 定</button>
+            </div>
+        </div>
+        <div id="setting-screen" class="container hidden">
+            <h1 data-i18n="setting_title">系統設定</h1>
+            <div class="form-group">
+                <label data-i18n="label_language">語言設定 / Language</label>
+                <select id="lang-select" onchange="changeLanguage(this.value)">
+                    <option value="zh">繁體中文</option>
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                    <option value="ko">한국어</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="label_preference">答題偏好</label>
+                <select id="pref-select" onchange="changePreference(this.value)">
+                    <option value="instant" data-i18n="opt_instant">答題後公佈正確答案</option>
+                    <option value="end" data-i18n="opt_end">答題後不公佈（全答完才顯示）</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top: 30px; border-top: 1px dashed #CCC; padding-top: 20px;">
+                <label data-i18n="label_danger_zone" style="color: #E53935;">危險區域 / Danger Zone</label>
+                <button class="btn btn-delete" data-i18n="btn_clear_all_data" onclick="clearAllSystemData()">徹底刪除現有題目紀錄</button>
+            </div>
+            <button class="btn btn-setting" data-i18n="btn_back_home" onclick="switchScreen('cover-screen')" style="margin-top: 20px;">返回首頁</button>
+        </div>
+
+        <div id="select-creator-screen" class="container hidden">
+            <h1 data-i18n="select_creator">選擇出題者</h1>
+            <div id="fr24-status-box" class="fr24-row">
+                <div class="fr24-info"><span data-i18n="info_creator">出題者</span> : <span id="display-creator-nickname">未知出題者</span></div>
+                <button id="fr24-action-btn" class="btn btn-start fr24-btn fr24-btn-disabled" disabled data-i18n="status_no_quiz">無題目</button>
+            </div>
+            <button class="btn btn-setting" data-i18n="btn_back_home" onclick="switchScreen('cover-screen')">返回首頁</button>
+        </div>
+        <div id="tester-name-screen" class="container hidden">
+            <h1 data-i18n="tester_nickname_title">測試者暱稱</h1>
+            <p class="subtitle" data-i18n="tester_nickname_sub">請輸入你的名字，系統將會記錄你的分數</p>
+            <div class="form-group">
+                <label for="tester-name-input" data-i18n="label_your_nickname">請輸入你的暱稱：</label>
+                <input type="text" id="tester-name-input">
+            </div>
+            <button class="btn btn-start" data-i18n="btn_start_challenge" onclick="submitTesterName()">開始挑戰題目</button>
+            <button class="btn btn-setting" data-i18n="btn_prev_step" onclick="switchScreen('select-creator-screen')">返回上一步</button>
+        </div>
+        <div id="name-screen" class="container hidden">
+            <h1 data-i18n="creator_nickname_title">出題者暱稱</h1>
+            <p class="subtitle" data-i18n="creator_nickname_sub">在開始出題前，請先告訴我們你的名字</p>
+            <div class="form-group">
+                <label for="creator-name-input" data-i18n="label_your_nickname">請輸入你的暱稱：</label>
+                <input type="text" id="creator-name-input">
+            </div>
+            <button class="btn btn-create" data-i18n="btn_next_step" onclick="submitName()">下一步 (開始出題)</button>
+            <button class="btn btn-setting" data-i18n="btn_back_home" onclick="switchScreen('cover-screen')">返回首頁</button>
+        </div>
+        <div id="create-screen" class="container hidden">
+            <h1 data-i18n="create_quiz_title">建立題目</h1>
+            <div id="quiz-progress" class="subtitle">目前進度：第 1 / 10 題</div>
+            <div class="form-group">
+                <label for="question-input" data-i18n="label_input_question">請輸入題目：</label>
+                <input type="text" id="question-input">
+            </div>
+            <div class="form-group">
+                <label data-i18n="label_input_options">請輸入選項，並【勾選】哪一個是正確答案：</label>
+                <div class="options-list">
+                    <div class="option-row"><input type="radio" name="correct-answer" value="0"><input type="text" class="option-input"></div>
+                    <div class="option-row"><input type="radio" name="correct-answer" value="1"><input type="text" class="option-input"></div>
+                    <div class="option-row"><input type="radio" name="correct-answer" value="2"><input type="text" class="option-input"></div>
+                    <div class="option-row"><input type="radio" name="correct-answer" value="3"><input type="text" class="option-input"></div>
+                    <div class="option-row"><input type="radio" name="correct-answer" value="4"><input type="text" class="option-input"></div>
+                </div>
+            </div>
+            <div class="btn-group-row">
+                <button id="btn-prev" class="btn btn-back" data-i18n="btn_prev_question" onclick="prevQuestion()">上一題</button>
+                <button class="btn btn-create" data-i18n="btn_next_question" onclick="nextQuestion()">下一題</button>
+            </div>
+            <button class="btn btn-setting" data-i18n="btn_abandon_quiz" onclick="if(confirm(getAlertText('confirm_abandon'))){switchScreen('cover-screen')}" style="margin-top:20px; background-color:#90A4AE;">放棄出題回首頁</button>
+        </div>
+        <div id="play-screen" class="container hidden">
+            <h1 id="play-title" data-i18n="challenge_title">選擇題挑戰</h1>
+            <div id="play-progress" class="subtitle">正在回答第 1 / 10 題</div>
+            <div class="form-group" style="background-color: #E3F2FD; padding: 15px; border-radius: 10px; border-left: 5px solid #1E88E5; font-size: 1.2rem; font-weight: bold; color: #1565C0; margin-bottom: 25px;">
+                <span data-i18n="label_question_prefix">題目：</span><span id="play-question-text">---</span>
+            </div>
+            <label data-i18n="label_select_correct">請選擇一個你認為正確的答案：</label>
+            <div id="play-options-block" class="options-list" style="margin-top: 10px;"></div>
+            <button id="play-next-btn" class="btn btn-next-step-play hidden" data-i18n="btn_next_question" onclick="goToNextPlayQuestion()">下一題</button>
+        </div>
+        <div id="result-screen" class="container hidden">
+            <h1 data-i18n="quiz_complete_title">🎉 出題完成！</h1>
+            <p id="completion-msg" class="subtitle">已經成功設定了 10 道選擇題！</p>
+            <div id="quiz-summary" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
+            <button class="btn btn-start" data-i18n="btn_confirm_home" onclick="backToHomeWithoutClear()">確認並回首頁</button>
+        </div>
+
+        <div id="score-screen" class="container hidden">
+            <h1>📊 測試結果</h1>
+            <p id="score-summary-msg" class="subtitle">得分計算中...</p>
+            <div id="score-circle" style="font-size: 4rem; font-weight: bold; color: #E65100; margin: 20px 0;">0 分</div>
+            <button class="btn btn-start" data-i18n="btn_back_system" onclick="switchScreen('cover-screen')">回系統首頁</button>
+        </div>
+    </div>
+
+    <script>
+        function verifyGatePassword() {
+            const pwdInput = document.getElementById('gate-pwd-input').value;
+            if (pwdInput === "開發人員密碼") {
+                document.getElementById('pwd-gate').classList.add('hidden');
+                document.getElementById('main-body').classList.remove('hidden');
+            } else {
+                alert("密碼錯誤，拒絕存取！");
+            }
+        }
+
+        document.getElementById('gate-pwd-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { verifyGatePassword(); }
+        });
+
+        const i18nDict = {
+            zh: { main_title: "選擇題", btn_start_test: "開始測試", btn_create_quiz: "出 題", btn_setting: "設 定", setting_title: "系統設定", label_language: "語言設定 / Language", label_preference: "答題偏好", opt_instant: "答題後公佈正確答案", opt_end: "答題後不公佈（全答完才顯示）", btn_back_home: "返回首頁", select_creator: "選擇出題者", info_creator: "出題者", status_no_quiz: "無題目", status_start: "開始測試", status_unknown: "未知出題者", tester_nickname_title: "測試者暱稱", tester_nickname_sub: "請輸入你的名字，系統將會記錄你的分數", label_your_nickname: "請輸入你的暱稱：", btn_start_challenge: "開始挑戰題目", btn_prev_step: "返回上一步", creator_nickname_title: "出題者暱稱", creator_nickname_sub: "在開始出題前，請先告訴我們你的名字", btn_next_step: "下一步 (開始出題)", create_quiz_title: "建立題目", label_input_question: "請輸入題目：", label_input_options: "請輸入選項，並【勾選】哪一個是正確答案：", btn_prev_question: "上一題", btn_next_question: "下一題", btn_abandon_quiz: "放棄出題回首頁", challenge_title: "選擇題挑戰", label_question_prefix: "題目：", label_select_correct: "請選擇一個你認為正確的答案：", quiz_complete_title: "🎉 出題完成！", btn_confirm_home: "確認並回首頁", score_title: "📊 測試結果", btn_back_system: "回系統首頁", alert_no_quiz: "目前系統裡還沒有完整的 10 道題目喔！請先去點「出題」完成設定。", alert_input_name: "請輸入暱稱才可以開始出題喔！", alert_input_q: "請填寫題目名稱！", alert_input_opt: "請至少輸入 2 個答案選項！", alert_check_ans: "請勾選這題的正確答案選項！", alert_empty_ans: "您勾選為正確答案的格子沒有填寫內容，請重新確認！", alert_first_q: "這已經是第一題囉！不能再往回了。", alert_input_tester: "請輸入你的名字再開始挑戰喔！", confirm_abandon: "確定要放棄目前進度回首頁嗎？", progress_create: "目前進度：第 {num} / 10 題", progress_play: "正在回答第 {num} / 10 題", challenge_prefix: "挑戰 {name} 的選擇題", complete_msg: "✨ {name} 已經成功設定了 10 道選擇題！", score_msg: "🎉 挑戰完成！\n{tName} 在 {cName} 的選擇題中獲得了：", correct_tag: " (正確答案)", label_danger_zone: "危險區域 / Danger Zone", btn_clear_all_data: "徹底刪除現有題目紀錄", alert_reset_success: "系統題目紀錄已徹底清除！", confirm_reset: "確定要清空所有已出的題目嗎？朋友將無法再進行測試。", correct_alert: "恭喜答對！", wrong_alert: "答錯囉！正確答案是：" },
+            en: { main_title: "Multiple Choice", btn_start_test: "Start Test", btn_create_quiz: "Create Quiz", btn_setting: "Settings", setting_title: "System Settings", label_language: "Language / 語言設定", label_preference: "Quiz Preference", opt_instant: "Reveal correct answer instantly", opt_end: "Reveal score at the very end", btn_back_home: "Back to Home", select_creator: "Select Creator", info_creator: "Creator", status_no_quiz: "No Quiz", status_start: "Start Test", status_unknown: "Unknown Creator", tester_nickname_title: "Tester Nickname", tester_nickname_sub: "Please enter your name to record your score", label_your_nickname: "Enter your nickname:", btn_start_challenge: "Start Challenge", btn_prev_step: "Back", creator_nickname_title: "Creator Nickname", creator_nickname_sub: "Please tell us your name before creating questions", btn_next_step: "Next (Start)", create_quiz_title: "Create Questions", label_input_question: "Enter Question:", label_input_options: "Enter options and [Check] the correct one:", btn_prev_question: "Previous", btn_next_question: "Next", btn_abandon_quiz: "Abandon & Exit", challenge_title: "Quiz Challenge", label_question_prefix: "Question: ", label_select_correct: "Select the correct answer:", quiz_complete_title: "🎉 Quiz Completed!", btn_confirm_home: "Confirm & Home", score_title: "📊 Results", btn_back_system: "Back to System Home", alert_no_quiz: "There are no questions yet! Please click 'Create Quiz' first.", alert_input_name: "Please enter a nickname to start!", alert_input_q: "Please enter the question!", alert_input_opt: "Please provide at least 2 options!", alert_check_ans: "Please check the correct answer!", alert_empty_ans: "The checked option cannot be empty!", alert_first_q: "This is already the first question.", alert_input_tester: "Please enter your name to start!", confirm_abandon: "Are you sure you want to abandon and go back?", progress_create: "Progress: Q{num} / 10", progress_play: "Answering Q{num} / 10", challenge_prefix: "Challenging {name}'s Quiz", complete_msg: "✨ {name} has successfully set up 10 questions!", score_msg: "🎉 Completed!\n{tName} scored in {cName}'s quiz:", correct_tag: " (Correct Answer)", label_danger_zone: "Danger Zone", btn_clear_all_data: "Clear all quiz data", alert_reset_success: "All quiz data has been successfully wiped!", confirm_reset: "Are you sure you want to clear all data? Friends won't be able to test.", correct_alert: "Correct!", wrong_alert: "Wrong! The correct answer is: " },
+            ja: { main_title: "選択式クイズ", btn_start_test: "テスト開始", btn_create_quiz: "問題作成", btn_setting: "設 定", setting_title: "システム設定", label_language: "言語設定 / Language", label_preference: "回答の好み", opt_instant: "回答後に正解を表示する", opt_end: "最後にまとめて結果を表示する", btn_back_home: "ホームに戻る", select_creator: "作成者選択", info_creator: "作成者", status_no_quiz: "問題なし", status_start: "テスト開始", status_unknown: "未確認の作成者", tester_nickname_title: "挑戦者の名前", tester_nickname_sub: "スコアを記録するため、名前を入力してください", label_your_nickname: "ニックネームを入力:", btn_start_challenge: "挑戦を始める", btn_prev_step: "戻る", creator_nickname_title: "作成者の名前", creator_nickname_sub: "問題を特定する前に名前を教えてください", btn_next_step: "次へ (作成開始)", create_quiz_title: "問題作成", label_input_question: "問題を入力してください:", label_input_options: "選択肢を入力し、正解を【チェック】してください:", btn_prev_question: "前の問題", btn_next_question: "次の問題", btn_abandon_quiz: "破棄してホームへ", challenge_title: "選択式クイズに挑戦", label_question_prefix: "問題: ", label_select_correct: "正しいと思う答えを1つ選んでください:", quiz_complete_title: "🎉 作成完了！", btn_confirm_home: "確認してホームへ", score_title: "📊 テスト結果", btn_back_system: "システムホームへ", alert_no_quiz: "問題がありません！まずは「問題作成」を完了させてください。", alert_input_name: "作成を開始するには名前を入力してください！", alert_input_q: "問題を入力してください！", alert_input_opt: "少なくとも2つの選択肢を入力してください！", alert_check_ans: "正解の選択肢にチェックを入れてください！", alert_empty_ans: "正解として選択された欄が空欄です！", alert_first_q: "これが最初の問題です。", alert_input_tester: "挑戦を開始するには名前を入力してください！", confirm_abandon: "現在の進捗を破棄してホームに戻りますか？", progress_create: "進捗: 第 {num} / 10 問", progress_play: "第 {num} / 10 問を回答中", challenge_prefix: "{name} のクイズに挑戦中", complete_msg: "✨ {name} が 10 問のクイズ作成に成功しました！", score_msg: "🎉 チャレンジ完了！\n{tName} さんは {cName} さんのクイズで以下を獲得:", correct_tag: " (正解)", label_danger_zone: "危険エリア", btn_clear_all_data: "すべてのクイズデータを削除", alert_reset_success: "クイズデータは完全に消去されました！", confirm_reset: "すべての問題データを削除してもよろしいですか？友達がテストできなくなります。", correct_alert: "正解です！", wrong_alert: "不正解！正解は: " },
+            ko: { main_title: "객관식 퀴즈", btn_start_test: "테스트 시작", btn_create_quiz: "문제 출제", btn_setting: "설 정", setting_title: "시스템 설정", label_language: "언어 설정 / Language", label_preference: "정답 확인 기본設定", opt_instant: "문제 제출 후 바로 정답 공개", opt_end: "마지막에 정답 한 번에 공개", btn_back_home: "홈으로 돌아가기", select_creator: "출제자 선택", info_creator: "출제자", status_no_quiz: "문제 없음", status_start: "테스트 시작", status_unknown: "알 수 없는 출제자", tester_nickname_title: "도전자 닉네임", tester_nickname_sub: "점수를 기록하기 위해 이름을 입력해 주세요", label_your_nickname: "닉네임을 입력하세요:", btn_start_challenge: "도전 시작하기", btn_prev_step: "이전 단계로", creator_nickname_title: "출제자 닉네임", creator_nickname_sub: "문제를 만들기 전에 이름을 알려주세요", btn_next_step: "다음 (출제 시작)", create_quiz_title: "문제 만들기", label_input_question: "문제를 입력하세요:", label_input_options: "선택지를 입력하고 정답인 항목에 [체크] 하세요:", btn_prev_question: "이전 문제", btn_next_question: "다음 문제", btn_abandon_quiz: "출제 포기하고 홈으로", challenge_title: "객관식 퀴즈 도전", label_question_prefix: "문제: ", label_select_correct: "올바른 정답을 선택해 주세요:", quiz_complete_title: "🎉 출제 완료!", btn_confirm_home: "확인 후 홈으로", score_title: "📊 테스트 결과", btn_back_system: "시스템 홈으로", alert_no_quiz: "등록된 문제가 없습니다! 먼저 \'문제 출제\'를 진행해 주세요.", alert_input_name: "출제를 시작하려면 닉네임을 입력해 주세요!", alert_input_q: "문제 내용을 입력해 주세요!", alert_input_opt: "최소 2개 이상의 선택지를 입력해 주세요!", alert_check_ans: "이 문제의 정답 항목을 체크해 주세요!", alert_empty_ans: "정답으로 체크된 항목에 내용이 없습니다!", alert_first_q: "이미 첫 번째 문제입니다.", alert_input_tester: "도전을 시작하려면 이름을 입력해 주세요!", confirm_abandon: "현재 진행 상황을 포기하고 홈으로 돌아갈까요?", progress_create: "현재 진행 상황: {num} / 10 번 문제", progress_play: "{num} / 10 번 문제 푸는 중", challenge_prefix: "{name}의 퀴즈 도전 중", complete_msg: "✨ {name}님이 10개의 객관식 퀴즈 문제를 성공적으로 만들었습니다!", score_msg: "🎉 도전 완료!\n{tName}님이 {cName}님의 퀴즈에서 獲得한 점수:", correct_tag: " (정답)", label_danger_zone: "위험 구역", btn_clear_all_data: "모든 퀴즈 데이터 완전히 삭제", alert_reset_success: "등록된 모든 문제가 성공적으로 삭제되었습니다!", confirm_reset: "정말로 모든 문제를 삭제하시겠습니까? 친구들이 더 이상 테스트를 볼 수 없습니다.", correct_alert: "축하합니다! 정답입니다.", wrong_alert: "틀렸습니다! 정답은: " }
+        };
+
+        let currentLang = localStorage.getItem('app_lang') || "zh"; let quizPreference = localStorage.getItem('quiz_pref') || "instant";
+        let creatorName = localStorage.getItem('saved_creator_name') || ""; let savedQuestions = JSON.parse(localStorage.getItem('saved_questions_list')) || [];
+        let currentQuestionNum = 1; const totalQuestions = 10; let testerName = ""; let playCurrentIndex = 0; let testScore = 0; let isOptionClicked = false;
+        function changeLanguage(lang) { currentLang = lang; localStorage.setItem('app_lang', lang); applyLocalization(); }
+        function changePreference(pref) { quizPreference = pref; localStorage.setItem('quiz_pref', pref); }
+        function getAlertText(key) { return i18nDict[currentLang][key]; }
+
+        function switchScreen(screenId) { document.querySelectorAll('.container').forEach(el => el.classList.add('hidden')); document.getElementById(screenId).classList.remove('hidden'); if(screenId === 'create-screen') loadQuestionToInputs(); }
+
+        function openStartTest() {
+            const nicknameSpan = document.getElementById('display-creator-nickname'); const actionBtn = document.getElementById('fr24-action-btn'); const statusBox = document.getElementById('fr24-status-box');
+            if (savedQuestions.length < totalQuestions) { nicknameSpan.innerText = getAlertText('status_unknown'); actionBtn.innerText = getAlertText('status_no_quiz'); actionBtn.className = "btn fr24-btn fr24-btn-disabled"; actionBtn.disabled = true; actionBtn.onclick = null; statusBox.style.borderLeftColor = "#B0BEC5"; } 
+            else { nicknameSpan.innerText = creatorName; actionBtn.innerText = getAlertText('status_start'); actionBtn.className = "btn btn-start fr24-btn"; actionBtn.disabled = false; actionBtn.onclick = function() { switchScreen('tester-name-screen'); }; statusBox.style.borderLeftColor = "#1E88E5"; }
+            switchScreen('select-creator-screen');
+        }
+
+        function submitName() { const nameInput = document.getElementById('creator-name-input').value.trim(); if (nameInput === "") { alert(getAlertText('alert_input_name')); return; } creatorName = nameInput; currentQuestionNum = 1; switchScreen('create-screen'); }
+
+        function nextQuestion() {
+            const questionText = document.getElementById('question-input').value.trim(); const optionInputs = document.querySelectorAll('.option-input'); let options = []; let originalIndices = []; optionInputs.forEach((input, index) => { if (input.value.trim() !== "") { options.push(input.value.trim()); originalIndices.push(index); } });
+            if (questionText === "") { alert(getAlertText('alert_input_q')); return; } if (options.length < 2) { alert(getAlertText('alert_input_opt')); return; }
+            let selectedRadio = document.querySelector('input[name="correct-answer"]:checked'); if (!selectedRadio) { alert(getAlertText('alert_check_ans')); return; }
+            let selectedIndex = parseInt(selectedRadio.value); if (optionInputs[selectedIndex].value.trim() === "") { alert(getAlertText('alert_empty_ans')); return; }
+            savedQuestions[currentQuestionNum - 1] = { question: questionText, options: options, correctIndex: originalIndices.indexOf(selectedIndex), rawInputs: Array.from(optionInputs).map(input => input.value), rawRadioChecked: selectedIndex };
+            if (currentQuestionNum < totalQuestions) { currentQuestionNum++; loadQuestionToInputs(); } 
+            else { localStorage.setItem('saved_creator_name', creatorName); localStorage.setItem('saved_questions_list', JSON.stringify(savedQuestions)); document.getElementById('completion-msg').innerText = getAlertText('complete_msg').replace('{name}', creatorName); showSummary(); switchScreen('result-screen'); }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionNum > 1) {
+                const questionText = document.getElementById('question-input').value.trim(); const optionInputs = document.querySelectorAll('.option-input'); const selectedRadio = document.querySelector('input[name="correct-answer"]:checked');
+                if (questionText !== "" || Array.from(optionInputs).some(i => i.value.trim() !== "")) { savedQuestions[currentQuestionNum - 1] = { question: questionText, options: Array.from(optionInputs).map(i => i.value.trim()).filter(v => v !== ""), correctIndex: selectedRadio ? Array.from(optionInputs).map(i => i.value.trim()).filter(v => v !== "").indexOf(parseInt(selectedRadio.value)) : -1, rawInputs: Array.from(optionInputs).map(input => input.value), rawRadioChecked: selectedRadio ? parseInt(selectedRadio.value) : -1 }; }
+                currentQuestionNum--; loadQuestionToInputs();
+            } else { alert(getAlertText('alert_first_q')); }
+        }
+
+        function clearAllSystemData() {
+            if (confirm(getAlertText('confirm_reset'))) {
+                localStorage.removeItem('saved_creator_name'); localStorage.removeItem('saved_questions_list');
+                creatorName = ""; savedQuestions = []; currentQuestionNum = 1;
+                alert(getAlertText('alert_reset_success')); applyLocalization(); switchScreen('cover-screen');
+            }
+        }
+
+        function loadQuestionToInputs() {
+            document.getElementById('quiz-progress').innerText = getAlertText('progress_create').replace('{num}', currentQuestionNum);
+            const prevBtn = document.getElementById('btn-prev'); if (currentQuestionNum === 1) { prevBtn.style.opacity = "0.4"; prevBtn.style.cursor = "not-allowed"; } else { prevBtn.style.opacity = "1"; prevBtn.style.cursor = "pointer"; }
+            const existingData = savedQuestions[currentQuestionNum - 1];
+            if (existingData) {
+                document.getElementById('question-input').value = existingData.question || ""; const optionInputs = document.querySelectorAll('.option-input'); optionInputs.forEach((input, idx) => { input.value = existingData.rawInputs ? existingData.rawInputs[idx] : ""; });
+                const radioButtons = document.querySelectorAll('input[name="correct-answer"]'); radioButtons.forEach((radio) => { if (existingData.rawRadioChecked !== undefined && parseInt(radio.value) === existingData.rawRadioChecked) { radio.checked = true; } else { radio.checked = false; } });
+            } else { document.getElementById('question-input').value = ""; const optionInputs = document.querySelectorAll('.option-input'); optionInputs.forEach(input => input.value = ""); const radioButtons = document.querySelectorAll('input[name="correct-answer"]'); radioButtons.forEach(radio => radio.checked = false); }
+        }
+
+        function showSummary() {
+            const summaryDiv = document.getElementById('quiz-summary'); summaryDiv.innerHTML = "";
+            savedQuestions.forEach((item, index) => { if(!item) return; let optionsHtml = item.options.map((opt, i) => { return `<li>選項 ${i+1}: ${opt}${(i === item.correctIndex) ? ' <span class="correct-ans">' + getAlertText('correct_tag') + '</span>' : ''}</li>`; }).join(''); summaryDiv.innerHTML += `<div class="result-item"><strong>第 ${index + 1} 題：${item.question}</strong><ul style="margin: 5px 0 0 0; padding-left: 20px; font-size:0.9rem; color:#555;">${optionsHtml}</ul></div>`; });
+        }
+
+        function backToHomeWithoutClear() { switchScreen('cover-screen'); }
+        function submitTesterName() { const tName = document.getElementById('tester-name-input').value.trim(); if (tName === "") { alert(getAlertText('alert_input_tester')); return; } testerName = tName; playCurrentIndex = 0; testScore = 0; document.getElementById('play-title').innerText = getAlertText('challenge_prefix').replace('{name}', creatorName); loadPlayQuestion(); switchScreen('play-screen'); }
+
+        function loadPlayQuestion() {
+            isOptionClicked = false; document.getElementById('play-next-btn').classList.add('hidden');
+            document.getElementById('play-progress').innerText = getAlertText('progress_play').replace('{num}', playCurrentIndex + 1);
+            const currentQuiz = savedQuestions[playCurrentIndex]; document.getElementById('play-question-text').innerText = currentQuiz.question;
+            const optionsBlock = document.getElementById('play-options-block'); optionsBlock.innerHTML = "";
+            currentQuiz.options.forEach((opt, idx) => { optionsBlock.innerHTML += `<button class="quiz-option-btn" onclick="selectAnswer(this, ${idx})">${idx + 1}. ${opt}</button>`; });
+        }
+
+        function selectAnswer(btnElement, chosenIdx) {
+            if (isOptionClicked) return; const currentQuiz = savedQuestions[playCurrentIndex];
+            if (quizPreference === "instant") {
+                isOptionClicked = true; const allButtons = document.querySelectorAll('#play-options-block .quiz-option-btn');
+                if (chosenIdx === currentQuiz.correctIndex) { btnElement.classList.add('correct'); testScore += 10; } 
+                else { btnElement.classList.add('wrong'); allButtons[currentQuiz.correctIndex].classList.add('correct'); }
+                document.getElementById('play-next-btn').classList.remove('hidden');
+            } else { if (chosenIdx === currentQuiz.correctIndex) { testScore += 10; } processNextFlow(); }
+        }
+
+        function goToNextPlayQuestion() { processNextFlow(); }
+        function processNextFlow() {
+            if (playCurrentIndex < totalQuestions - 1) { playCurrentIndex++; loadPlayQuestion(); } 
+            else { document.getElementById('score-summary-msg').innerText = getAlertText('score_msg').replace('{tName}', testerName).replace('{cName}', creatorName); document.getElementById('score-circle').innerText = `${testScore} 分`; document.getElementById('tester-name-input').value = ""; switchScreen('score-screen'); }
+        }
+
+        function applyLocalization() {
+            const dict = i18nDict[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    if (el.tagName === 'INPUT' && el.type === 'button') { el.value = dict[key]; } 
+                    else { el.innerText = dict[key]; }
+                }
+            });
+            document.getElementById('lang-select').value = currentLang;
+            document.getElementById('pref-select').value = quizPreference;
+        }
+
+        window.onload = function() { applyLocalization(); };
+    </script>
